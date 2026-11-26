@@ -32,11 +32,26 @@ if [[ -f "$REPO" ]]; then
     -e 's|^#baseurl=http://mirror.centos.org|baseurl=https://vault.centos.org|g' \
     "$REPO"
 fi
+# CentOS7 自带 GCC 4.8 不支持 pcsc-lite 2.0.3 源码里的 C11 _Atomic，需要 devtoolset
+cat > /etc/yum.repos.d/CentOS-SCLo-scl.repo <<'EOF'
+[sclo]
+name=CentOS 7 SCLO
+baseurl=https://vault.centos.org/7.9.2009/sclo/x86_64/sclo/
+enabled=1
+gpgcheck=0
+EOF
+cat > /etc/yum.repos.d/CentOS-SCLo-scl-rh.repo <<'EOF'
+[sclo-rh]
+name=CentOS 7 SCLO RH
+baseurl=https://vault.centos.org/7.9.2009/sclo/x86_64/rh/
+enabled=1
+gpgcheck=0
+EOF
 yum makecache >/dev/null 2>&1 || true
 
 # ---------- 2. 依赖 ----------
 log "安装编译依赖"
-PKG_LIST="gcc make autoconf automake libtool pkgconfig flex curl tar gzip bzip2 file"
+PKG_LIST="gcc make autoconf automake libtool pkgconfig flex curl tar gzip bzip2 file devtoolset-9-gcc"
 if [[ "$ENABLE_LIBUDEV" == "1" || "$ENABLE_LIBSYSTEMD" == "1" ]]; then
   PKG_LIST="$PKG_LIST systemd-devel"
 fi
@@ -45,6 +60,9 @@ if [[ "$ENABLE_POLKIT" == "1" ]]; then
 fi
 # shellcheck disable=SC2086
 yum install -y $PKG_LIST
+# 启用 GCC 9：覆盖 PATH 中的 gcc/cc，使 _Atomic 可用
+source /opt/rh/devtoolset-9/enable
+gcc --version | head -1
 
 # ---------- 3. 源码 + 缺失的 autoconf 宏 ----------
 log "下载 pcsc-lite ${VERSION} 源码"
