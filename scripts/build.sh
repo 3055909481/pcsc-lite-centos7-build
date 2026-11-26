@@ -75,6 +75,10 @@ CONF_ARGS=(
   "--disable-documentation"
   "--with-systemdsystemunitdir=no"
 )
+# 未启用 libudev 时必须显式关闭 USB，否则 configure 会回退去找 libusb 头文件并报错
+if [[ "$ENABLE_LIBUDEV" != "1" ]]; then
+  CONF_ARGS+=("--disable-usb")
+fi
 if [[ "$ENABLE_LIBUDEV" != "1" ]]; then
   CONF_ARGS+=("--disable-libudev")
 fi
