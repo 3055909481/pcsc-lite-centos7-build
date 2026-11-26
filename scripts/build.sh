@@ -61,7 +61,10 @@ fi
 # shellcheck disable=SC2086
 yum install -y $PKG_LIST
 # 启用 GCC 9：覆盖 PATH 中的 gcc/cc，使 _Atomic 可用
+# enable 脚本引用了未定义的 MANPATH，需临时关闭 nounset
+set +u
 source /opt/rh/devtoolset-9/enable
+set -u
 gcc --version | head -1
 
 # ---------- 3. 源码 + 缺失的 autoconf 宏 ----------
